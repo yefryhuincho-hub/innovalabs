@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Innova Labs | Especialización SIG</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #101e37;
+  color: white;
+}
+
+/* HERO */
+.hero {
+  padding: 50px 20px;
+  text-align: center;
+}
+
+.hero img {
+  width: 130px;
+  margin-bottom: 15px;
+}
+
+.hero h1 {
+  color: #03d19b;
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+
+.hero p {
+  max-width: 500px;
+  margin: auto;
+  opacity: 0.85;
+}
+
+/* CARD */
+.card {
+  background: white;
+  color: black;
+  margin: 20px;
+  padding: 25px;
+  border-radius: 14px;
+  text-align: center;
+}
+
+/* INPUTS */
+input, button, textarea {
+  width: 100%;
+  max-width: 320px;
+  padding: 12px;
+  margin: 10px auto;
+  border-radius: 8px;
+  border: none;
+  display: block;
+}
+
+button {
+  background: #03d19b;
+  color: black;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* CANVAS */
+canvas {
+  display: none;
+  margin-top: 20px;
+  width: 100%;
+  max-width: 400px;
+  border-radius: 12px;
+}
+
+/* COPY BOX */
+textarea {
+  height: 140px;
+  resize: none;
+  font-size: 13px;
+}
+
+/* RESPONSIVE */
+@media (min-width: 768px) {
+  .hero h1 {
+    font-size: 34px;
+  }
+
+  canvas {
+    max-width: 500px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<!-- HERO -->
+<section class="hero">
+  <img src="logo.png" onerror="this.style.display='none'">
+  <h1>Programa de Especialización en SIG</h1>
+  <p>Aplicado a Ecología y Conservación · Innova Labs</p>
+  <p>Genera tu flyer oficial como participante seleccionado</p>
+</section>
+
+<!-- GENERADOR -->
+<section class="card">
+
+  <h3>Sube tu foto</h3>
+
+  <input type="file" id="upload" accept="image/*">
+
+  <button onclick="draw()">Generar mi flyer</button>
+
+  <canvas id="canvas" width="1080" height="1080"></canvas>
+
+  <button onclick="download()">Descargar flyer</button>
+
+  <p style="font-size:13px;opacity:0.7;">
+    En laptop: usa scroll para zoom y arrastra la imagen<br>
+    En celular: usa dos dedos para hacer zoom y mover
+  </p>
+
+</section>
+
+<!-- TEXTO PARA REDES -->
+<section class="card">
+
+  <h3>Texto para compartir</h3>
+
+  <textarea readonly id="copyText">🌱✨ ¡Feliz de haber sido seleccionado/a!
+
+Seré parte del taller de ArcGIS Pro aplicado a la ecología y conservación, donde seguiré fortaleciendo mis habilidades en SIG con enfoque ambiental 🌍
+
+Motivado/a por todo lo que se viene 🚀
+
+#ArcGISConImpacto #InnovaLabs #EcosFoundation
+👉 No olviden etiquetar a @innovalabs.ecos</textarea>
+
+  <button onclick="copyText()">Copiar texto</button>
+
+</section>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+let img = new Image();
+let overlay = new Image();
+overlay.src = "overlay.png";
+
+let scale = 1;
+let posX = 0;
+let posY = 0;
+
+let dragging = false;
+let startX, startY;
+
+// TOUCH
+let lastDist = null;
+
+// subir imagen
+document.getElementById("upload").addEventListener("change", function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+
+  img.src = URL.createObjectURL(file);
+
+  img.onload = () => {
+    scale = 1;
+    posX = (canvas.width - img.width) / 2;
+    posY = (canvas.height - img.height) / 2;
+
+    canvas.style.display = "block";
+    draw();
+  };
+});
+
+// ZOOM PC
+canvas.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  scale += e.deltaY * -0.001;
+  scale = Math.min(Math.max(0.5, scale), 3);
+  draw();
+});
+
+// DRAG PC
+canvas.addEventListener("mousedown", (e) => {
+  dragging = true;
+  startX = e.offsetX - posX;
+  startY = e.offsetY - posY;
+});
+
+canvas.addEventListener("mousemove", (e) => {
+  if(dragging){
+    posX = e.offsetX - startX;
+    posY = e.offsetY - startY;
+    draw();
+  }
+});
+
+canvas.addEventListener("mouseup", () => dragging = false);
+canvas.addEventListener("mouseleave", () => dragging = false);
+
+// TOUCH EVENTS
+canvas.addEventListener("touchstart", (e) => {
+  if (e.touches.length === 1) {
+    startX = e.touches[0].clientX - posX;
+    startY = e.touches[0].clientY - posY;
+  }
+
+  if (e.touches.length === 2) {
+    lastDist = getDistance(e.touches);
+  }
+});
+
+canvas.addEventListener("touchmove", (e) => {
+  e.preventDefault();
+
+  if (e.touches.length === 1) {
+    posX = e.touches[0].clientX - startX;
+    posY = e.touches[0].clientY - startY;
+    draw();
+  }
+
+  if (e.touches.length === 2) {
+    let newDist = getDistance(e.touches);
+    let delta = newDist - lastDist;
+
+    scale += delta * 0.005;
+    scale = Math.min(Math.max(0.5, scale), 3);
+
+    lastDist = newDist;
+    draw();
+  }
+}, { passive: false });
+
+function getDistance(touches) {
+  let dx = touches[0].clientX - touches[1].clientX;
+  let dy = touches[0].clientY - touches[1].clientY;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+// DIBUJAR
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  if(!img.src) return;
+
+  const imgWidth = img.width * scale;
+  const imgHeight = img.height * scale;
+
+  ctx.drawImage(img, posX, posY, imgWidth, imgHeight);
+
+  ctx.drawImage(overlay, 0, 0, canvas.width, canvas.height);
+}
+
+// DESCARGAR
+function download(){
+  const link = document.createElement("a");
+  link.download = "innovalabs_flyer.png";
+  link.href = canvas.toDataURL();
+  link.click();
+}
+
+// COPIAR TEXTO
+function copyText(){
+  const text = document.getElementById("copyText");
+  text.select();
+  document.execCommand("copy");
+  alert("Texto copiado");
+}
+</script>
+
+</body>
+</html>
