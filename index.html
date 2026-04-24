@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Innova Labs | Especialización SIG</title>
 
+<!-- 🔥 FAVICON -->
+<link rel="icon" type="image/png" href="logo.png">
+
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
 <style>
@@ -13,7 +16,6 @@ body {
   font-family: 'Poppins', sans-serif;
   background: #101e37;
   color: white;
-  -webkit-font-smoothing: antialiased;
 }
 
 /* HERO */
@@ -50,7 +52,6 @@ body {
   max-width: 500px;
 }
 
-/* INPUTS + BOTONES + TEXTAREA */
 input, button, textarea {
   width: 100%;
   max-width: 320px;
@@ -59,27 +60,18 @@ input, button, textarea {
   border-radius: 8px;
   border: none;
   display: block;
-  font-family: 'Poppins', sans-serif; /* 🔥 APLICADO */
-  font-size: 14px;
+  font-family: 'Poppins', sans-serif;
 }
 
 button {
   background: #03d19b;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
-}
-
-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
 }
 
 textarea {
   height: 140px;
   resize: none;
-  font-size: 14px;
-  line-height: 1.5;
 }
 
 /* CANVAS */
@@ -95,50 +87,22 @@ canvas {
 
 <body>
 
-<!-- HERO -->
 <section class="hero">
   <img src="logo.png" onerror="this.style.display='none'">
   <h1>Programa de Especialización en SIG</h1>
   <p>Aplicado a Ecología y Conservación · Innova Labs</p>
-  <p>Genera tu flyer oficial como participante seleccionado</p>
 </section>
 
-<!-- GENERADOR -->
 <section class="card">
 
   <h3>Sube tu foto</h3>
-  <p>Luego haz clic en generar y ajusta la imagen</p>
 
   <input type="file" id="upload" accept="image/*">
-  <button onclick="draw()">Generar mi flyer</button>
+  <button onclick="draw()">Generar flyer</button>
 
   <canvas id="canvas" width="1080" height="1080"></canvas>
 
-  <button onclick="download()">Descargar flyer</button>
-
-</section>
-
-<!-- TEXTO -->
-<section class="card">
-
-  <h3>Texto para compartir</h3>
-
-  <textarea readonly id="copyText">🌱✨ ¡Feliz de haber sido seleccionad@!
-
-Seré parte del taller de ArcGIS Pro aplicado a la ecología y conservación, donde seguiré fortaleciendo mis habilidades en SIG con enfoque ambiental 🌍
-
-Alegre por todo lo que se viene 🚀
-
-#ArcGISConImpacto #InnovaLabs #EcosFoundation
-</textarea>
-<h3>👉 No olviden etiquetar a @innovalabs.ecos</h3>
-
-  <button onclick="copyTextFunc()">Copiar texto</button>
-
-  <h3>Compartir en redes</h3>
-
-  <button onclick="shareFacebook()">📘 Facebook</button>
-  <button onclick="openInstagram()">📸 Instagram</button>
+  <button onclick="download()">Descargar</button>
 
 </section>
 
@@ -150,10 +114,6 @@ let img = new Image();
 let overlay = new Image();
 overlay.src = "overlay.png";
 
-overlay.onerror = () => {
-  alert("Error cargando overlay.png");
-};
-
 let scale = 1;
 let posX = 0;
 let posY = 0;
@@ -163,20 +123,10 @@ let startX, startY;
 let lastDist = null;
 let imageLoaded = false;
 
-// CARGAR IMAGEN
+// SUBIR IMAGEN
 document.getElementById("upload").addEventListener("change", function(e){
   const file = e.target.files[0];
   if(!file) return;
-
-  if (!file.type.startsWith("image/")) {
-    alert("Solo se permiten imágenes");
-    return;
-  }
-
-  if (file.size > 5 * 1024 * 1024) {
-    alert("La imagen es muy pesada (máx 5MB)");
-    return;
-  }
 
   img.src = URL.createObjectURL(file);
 
@@ -197,10 +147,7 @@ document.getElementById("upload").addEventListener("change", function(e){
 
 // GENERAR
 function draw(){
-  if (!imageLoaded) {
-    alert("Primero sube una imagen");
-    return;
-  }
+  if (!imageLoaded) return;
 
   canvas.style.display = "block";
 
@@ -209,14 +156,11 @@ function draw(){
   const imgWidth = img.width * scale;
   const imgHeight = img.height * scale;
 
-  posX = Math.min(0, Math.max(posX, canvas.width - imgWidth));
-  posY = Math.min(0, Math.max(posY, canvas.height - imgHeight));
-
   ctx.drawImage(img, posX, posY, imgWidth, imgHeight);
   ctx.drawImage(overlay, 0, 0, canvas.width, canvas.height);
 }
 
-// ZOOM
+// ZOOM (PC)
 canvas.addEventListener("wheel", (e) => {
   e.preventDefault();
   scale += e.deltaY * -0.001;
@@ -224,7 +168,7 @@ canvas.addEventListener("wheel", (e) => {
   draw();
 });
 
-// DRAG
+// DRAG (PC)
 canvas.addEventListener("mousedown", (e) => {
   dragging = true;
   startX = e.offsetX - posX;
@@ -235,6 +179,13 @@ canvas.addEventListener("mousemove", (e) => {
   if(dragging){
     posX = e.offsetX - startX;
     posY = e.offsetY - startY;
+
+    const imgWidth = img.width * scale;
+    const imgHeight = img.height * scale;
+
+    posX = Math.min(0, Math.max(posX, canvas.width - imgWidth));
+    posY = Math.min(0, Math.max(posY, canvas.height - imgHeight));
+
     draw();
   }
 });
@@ -259,6 +210,13 @@ canvas.addEventListener("touchmove", (e) => {
   if (e.touches.length === 1) {
     posX = e.touches[0].clientX - startX;
     posY = e.touches[0].clientY - startY;
+
+    const imgWidth = img.width * scale;
+    const imgHeight = img.height * scale;
+
+    posX = Math.min(0, Math.max(posX, canvas.width - imgWidth));
+    posY = Math.min(0, Math.max(posY, canvas.height - imgHeight));
+
     draw();
   }
 
@@ -280,47 +238,11 @@ function getDistance(touches) {
 // DESCARGAR
 function download(){
   const link = document.createElement("a");
-  link.download = "innovalabs_flyer.png";
+  link.download = "flyer.png";
   link.href = canvas.toDataURL("image/png");
   link.click();
-}
-
-// COPIAR
-function copyTextFunc(){
-  const text = document.getElementById("copyText").value;
-  navigator.clipboard.writeText(text);
-  alert("Texto copiado");
-}
-
-// ===== SHARE =====
-function getText() {
-  return encodeURIComponent(document.getElementById("copyText").value);
-}
-
-function shareWhatsApp() {
-  const text = getText();
-  const isMobile = /Android|iPhone/i.test(navigator.userAgent);
-
-  const url = isMobile
-    ? `https://api.whatsapp.com/send?text=${text}`
-    : `https://web.whatsapp.com/send?text=${text}`;
-
-  window.open(url, "_blank");
-}
-
-function shareFacebook()  {
-  copyTextFunc();
-  alert("Texto copiado. Pégalo en Facebook");
-  window.open("https://www.facebook.com/", "_blank");
-}
-
-function openInstagram() {
-  copyTextFunc();
-  alert("Texto copiado. Pégalo en Instagram");
-  window.open("https://www.instagram.com/", "_blank");
 }
 </script>
 
 </body>
 </html>
-```
