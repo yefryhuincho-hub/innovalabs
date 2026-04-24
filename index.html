@@ -167,9 +167,18 @@ document.getElementById("upload").addEventListener("change", function(e){
   img.src = URL.createObjectURL(file);
 
   img.onload = () => {
-    scale = 1;
-    posX = (canvas.width - img.width) / 2;
-    posY = (canvas.height - img.height) / 2;
+
+    // 🔥 ESCALADO TIPO COVER (CLAVE)
+    const scaleX = canvas.width / img.width;
+    const scaleY = canvas.height / img.height;
+    scale = Math.max(scaleX, scaleY);
+
+    const imgWidth = img.width * scale;
+    const imgHeight = img.height * scale;
+
+    // 🔥 CENTRADO REAL
+    posX = (canvas.width - imgWidth) / 2;
+    posY = (canvas.height - imgHeight) / 2;
 
     canvas.style.display = "block";
     draw();
@@ -179,8 +188,11 @@ document.getElementById("upload").addEventListener("change", function(e){
 // ZOOM PC
 canvas.addEventListener("wheel", (e) => {
   e.preventDefault();
-  scale += e.deltaY * -0.001;
-  scale = Math.min(Math.max(0.5, scale), 3);
+
+  const zoom = e.deltaY * -0.001;
+  scale += zoom;
+  scale = Math.min(Math.max(0.5, scale), 4);
+
   draw();
 });
 
@@ -202,7 +214,7 @@ canvas.addEventListener("mousemove", (e) => {
 canvas.addEventListener("mouseup", () => dragging = false);
 canvas.addEventListener("mouseleave", () => dragging = false);
 
-// TOUCH EVENTS
+// TOUCH
 canvas.addEventListener("touchstart", (e) => {
   if (e.touches.length === 1) {
     startX = e.touches[0].clientX - posX;
@@ -228,7 +240,7 @@ canvas.addEventListener("touchmove", (e) => {
     let delta = newDist - lastDist;
 
     scale += delta * 0.005;
-    scale = Math.min(Math.max(0.5, scale), 3);
+    scale = Math.min(Math.max(0.5, scale), 4);
 
     lastDist = newDist;
     draw();
@@ -251,7 +263,6 @@ function draw(){
   const imgHeight = img.height * scale;
 
   ctx.drawImage(img, posX, posY, imgWidth, imgHeight);
-
   ctx.drawImage(overlay, 0, 0, canvas.width, canvas.height);
 }
 
@@ -268,7 +279,6 @@ function copyText(){
   const text = document.getElementById("copyText");
   text.select();
   document.execCommand("copy");
-  alert("Texto copiado");
 }
 </script>
 
