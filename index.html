@@ -211,8 +211,8 @@ function draw(){
   const imgWidth = img.width * scale;
   const imgHeight = img.height * scale;
 
-  posX = Math.min(0, Math.max(posX, canvas.width - imgWidth));
-  posY = Math.min(0, Math.max(posY, canvas.height - imgHeight));
+  ctx.drawImage(img, posX, posY, imgWidth, imgHeight);
+  ctx.drawImage(overlay, 0, 0, canvas.width, canvas.height);
 
   ctx.drawImage(img, posX, posY, imgWidth, imgHeight);
   ctx.drawImage(overlay, 0, 0, canvas.width, canvas.height);
@@ -325,4 +325,3 @@ function openInstagram() {
 
 </body>
 </html>
-```
